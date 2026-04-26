@@ -124,3 +124,39 @@ def afficher_erreurs(x, y, W1, b1, W2, b2, nb_erreurs=20):
     plt.show()
 
 afficher_erreurs(X_test, Y_test, W1_1, b1_1, W2_1, b2_1)
+
+# PCA sur 2000 images de test
+X_pca = X_test[:2000]
+labels = np.argmax(Y_test[:2000], axis=1)
+
+#Centrer
+moyenne = np.mean(X_pca, axis=0)
+X_centre = X_pca - moyenne
+
+#Matrice de covariance
+cov = np.cov(X_centre.T)
+
+#Vecteurs propres
+valeurs, vecteurs = np.linalg.eigh(cov)
+
+#Trier par variance décroissante
+idx = np.argsort(valeurs)[::-1]
+vecteurs = vecteurs[:, idx]
+
+#Projeter sur les 2 premiers vecteurs propres
+X_2d = X_centre @ vecteurs[:, :2]
+
+# Affichage
+plt.figure(figsize=(10, 8))
+couleurs = plt.cm.tab10(np.linspace(0, 1, 10))
+for chiffre in range(10):
+    masque = labels == chiffre
+    plt.scatter(X_2d[masque, 0], X_2d[masque, 1],
+                c=[couleurs[chiffre]], label=str(chiffre),
+                alpha=0.5, s=10)
+plt.legend(title='Chiffre', bbox_to_anchor=(1.05, 1))
+plt.title('PCA - Projection 2D des images MNIST')
+plt.xlabel('Composante principale 1')
+plt.ylabel('Composante principale 2')
+plt.tight_layout()
+plt.show()
