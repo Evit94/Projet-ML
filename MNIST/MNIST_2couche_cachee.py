@@ -1,26 +1,8 @@
 #MODELE AVEC DEUX COUCHES CACHEES
 
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras.utils import to_categorical
-
-#Chargement des données
-(X_train, Y_train), (X_test, Y_test) = keras.datasets.mnist.load_data()
-
-#Reshape 
-X_train = X_train.reshape(60000, 784)
-X_test = X_test.reshape(10000, 784)
-
-#Normalisation entre 0 et 1
-X_train = X_train / 255.0
-X_test = X_test / 255.0
-
-#One-hot encoding des étiquettes
-Y_train = to_categorical(Y_train)
-Y_test = to_categorical(Y_test)
+from preprocessing import X_train, Y_train, X_test, Y_test
 
 def softmax(o):
     exp_o = np.exp(o-np.max(o))
@@ -114,3 +96,10 @@ print(f"taux d'erreur (valeur train) : {evaluate(X_train, Y_train, W1, b1, W2, b
 #moins bon qu'avec seulement une couche -> sûrement du au learning rate ou nombre d'epochs
 
 print(f"taux d'erreur (valeur test) : {evaluate(X_test, Y_test, W1, b1, W2, b2, W3, b3):.2f}%") #2,61%
+
+np.save('MNIST/params/W1_2couches.npy', W1)
+np.save('MNIST/params/b1_2couches.npy', b1)
+np.save('MNIST/params/W2_2couches.npy', W2)
+np.save('MNIST/params/b2_2couches.npy', b2)
+np.save('MNIST/params/W3_2couches.npy', W3)
+np.save('MNIST/params/b3_2couches.npy', b3)

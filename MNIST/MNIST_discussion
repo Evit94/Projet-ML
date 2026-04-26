@@ -1,4 +1,0 @@
-Modèle            | Train  | Test
-Linéaire          | 8.19%  | 8.77%
-1 couche cachée   | 0.83%  | 2.69%
-2 couches cachées | 1.29%  | 2.61%

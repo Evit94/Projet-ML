@@ -1,28 +1,7 @@
 #MODELE LINEAIRE
 
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.utils import to_categorical
-
-
-#Chargement des données
-(X_train, Y_train), (X_test, Y_test) = keras.datasets.mnist.load_data()
-
-#Reshape 
-X_train = X_train.reshape(60000, 784)
-X_test = X_test.reshape(10000, 784)
-
-#Normalisation entre 0 et 1
-X_train = X_train / 255.0
-X_test = X_test / 255.0
-
-#One-hot encoding des étiquettes
-Y_train = to_categorical(Y_train)
-Y_test = to_categorical(Y_test)
+from preprocessing import X_train, Y_train, X_test, Y_test
 
 #Fonction softmax
 def softmax(o):
@@ -83,3 +62,7 @@ def evaluate(x,y, A, b):
 
 print(f"taux d'erreur (train) = {evaluate(X_train, Y_train, A, b)}%") #8,19%
 print(f"taux d'erreur (test) = {evaluate(X_test, Y_test, A, b)}%") #8,77%
+
+
+np.save('MNIST/params/A.npy', A)
+np.save('MNIST/params/b.npy', b)

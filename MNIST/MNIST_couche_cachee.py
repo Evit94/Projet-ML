@@ -1,27 +1,10 @@
 #MODELE AVEC UNE COUCHE CACHEE
 
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras.utils import to_categorical
-import matplotlib.pyplot as plt
+from preprocessing import X_train, Y_train, X_test, Y_test
 
-#Chargement des données
-(X_train, Y_train), (X_test, Y_test) = keras.datasets.mnist.load_data()
 
-#Reshape 
-X_train = X_train.reshape(60000, 784)
-X_test = X_test.reshape(10000, 784)
-
-#Normalisation entre 0 et 1
-X_train = X_train / 255.0
-X_test = X_test / 255.0
-
-#One-hot encoding des étiquettes
-Y_train = to_categorical(Y_train)
-Y_test = to_categorical(Y_test)
 
 #softmax et cross_entropy ne vont pas changer
 def softmax(o):
@@ -108,57 +91,10 @@ print(f"taux d'erreur (valeur train) : {evaluate(X_train, Y_train, W1, b1, W2, b
 #0,66%
 print(f"taux d'erreur (valeur test): {evaluate(X_test, Y_test, W1, b1, W2, b2):.2f}%") #2,43%
 
-#matrice de confusion
-def matrice_confusion(x, y, W1, b1, W2, b2):
-    matrice = np.zeros((10,10), dtype=int)
-    n = len(x)
-    for image in range(n):
-        X = x[image].reshape(784,1)
-        Y = y[image].reshape(10,1)
-        P, z, o1 = forward(X, W1, b1, W2, b2)
-        y_pred = np.argmax(P)
-        y_true = np.argmax(Y)
-        matrice[y_true, y_pred] += 1
-    return matrice
 
-mc = matrice_confusion(X_test, Y_test, W1, b1, W2, b2)
 
-plt.figure(figsize=(8,6))
-plt.imshow(mc, cmap='Blues')
-plt.xlabel('Prédit')
-plt.ylabel('Vrai')
-plt.title('Matrice de confusion')
-for i in range(10):
-    for j in range(10):
-        plt.text(j, i, mc[i,j], ha='center', va='center', fontsize=8)
-plt.show()
 
-def afficher_erreurs(x, y, W1, b1, W2, b2, nb_erreurs=20):
-    images_erreurs = []
-    preds_erreurs = []
-    vrais_erreurs = []
-
-    n = len(x)
-    for image in range(n):
-        X = x[image].reshape(784,1)
-        Y = y[image].reshape(10,1)
-        P, z, o1 = forward(X, W1, b1, W2, b2)
-        y_pred = np.argmax(P)
-        y_true = np.argmax(Y)
-        if y_pred != y_true:
-            images_erreurs.append(x[image].reshape(28, 28))  # image en 2D pour affichage
-            preds_erreurs.append(y_pred)
-            vrais_erreurs.append(y_true)
-        
-        if len(images_erreurs) == nb_erreurs:  # on s'arrête après nb_erreurs
-            break
-    # Affichage
-    fig, axes = plt.subplots(4, 5, figsize=(12, 8))
-    for i, ax in enumerate(axes.flat):
-        ax.imshow(images_erreurs[i], cmap='gray')
-        ax.set_title(f"Vrai: {vrais_erreurs[i]} | Prédit: {preds_erreurs[i]}", fontsize=8)
-        ax.axis('off')
-    plt.suptitle("Images mal classées")
-    plt.show()
-
-afficher_erreurs(X_test, Y_test, W1, b1, W2, b2)
+np.save('MNIST/params/W1_1couche.npy', W1)
+np.save('MNIST/params/b1_1couche.npy', b1)
+np.save('MNIST/params/W2_1couche.npy', W2)
+np.save('MNIST/params/b2_1couche.npy', b2)
