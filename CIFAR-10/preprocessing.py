@@ -19,15 +19,16 @@ B_test = X_test[:,:,:,2]
 X_gris_test = 0.299*R_test + 0.587*G_test + 0.114*B_test
 X_gris_test = X_gris_test.reshape(10000,1024)
 
+X_train = X_train.reshape(50000,3072)
+X_test = X_test.reshape(10000,3072)
+
 #Normalisation 
 X_gris_train = X_gris_train/255.0
 X_gris_test = X_gris_test/255.0
 
+X_train = X_train/255.0
+X_test = X_test/255.0
+
 #One-hot encoding
 Y_train = to_categorical(Y_train.flatten())
 Y_test = to_categorical(Y_test.flatten())
-
-print(X_gris_train.shape)   # (50000, 1024)
-print(X_gris_test.shape)    # (10000, 1024)
-print(X_gris_train.max())   # 1.0
-print(Y_train.shape)        # (50000, 10)
