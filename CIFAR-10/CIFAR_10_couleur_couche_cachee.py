@@ -6,9 +6,9 @@ def softmax(o):
     exp_o = np.exp(o-np.max(o))
     return exp_o/np.sum(exp_o)
 
-def cross_entropy(P, y):
-    L = -np.sum(y * np.log(P))
-    return L
+def cross_entropy(P, Y):
+    P_clip = np.clip(P, 1e-10, 1.0)
+    return np.mean(-np.sum(Y * np.log(P_clip), axis=1))
 
 def ReLU(x):
     return np.maximum(0,x)
@@ -55,8 +55,7 @@ def train(x, y, W1, b1, W2, b2, lr=0.01, epochs=10, batch_size=64):
 
             P, Z, O1 = forward(X_batch, W1, b1, W2, b2)
 
-            P_clip = np.clip(P, 1e-10, 1.0)
-            total_loss += np.mean(-np.sum(Y_batch * np.log(P_clip), axis=1))
+            total_loss += cross_entropy(P, Y_batch)
 
             dW1, db1, dW2, db2 = gradient(X_batch, Y_batch, P, Z, O1, W2, batch_size)
 
