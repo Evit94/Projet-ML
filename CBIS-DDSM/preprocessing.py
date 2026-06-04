@@ -59,10 +59,22 @@ def charger_donnees_reelles():
     return X, y
 
 
+def ajouter_tache(img, contraste):
+    #Ajoute une tache claire (masse) à une position et taille aléatoires
+    cx, cy = np.random.randint(30, 98, size=2)
+    r = np.random.randint(6, 16)
+    yy, xx = np.ogrid[:TAILLE, :TAILLE]
+    masque = (xx - cx) ** 2 + (yy - cy) ** 2 <= r ** 2
+    img[masque] += contraste
+    return img
+
+
 def generer_donnees_synthetiques(n=1500):
     #Données synthétiques de secours (le vrai dataset n'est pas disponible).
-    #Les images "malignes" contiennent une tache plus claire (signal apprenable),
-    #ce qui permet d'illustrer toute la chaîne (modèle, métriques, ROC).
+    #Pour rester réaliste, les deux classes peuvent contenir une tache, mais avec
+    #des contrastes qui se chevauchent : les masses malignes sont en moyenne plus
+    #marquées que les masses bénignes. Avec un fond bruité, la séparation n'est pas
+    #parfaite, ce qui donne des faux positifs / faux négatifs exploitables.
     print("ATTENTION : CSV/images CBIS-DDSM introuvables.")
     print("-> Génération d'un jeu de données SYNTHETIQUE pour la démonstration.")
     np.random.seed(42)
@@ -72,19 +84,17 @@ def generer_donnees_synthetiques(n=1500):
 
     X = []
     y = []
-    #Images bénignes : bruit de fond uniquement
+    #Images bénignes : fond bruité, parfois une masse de faible contraste
     for _ in range(n_benin):
-        img = np.random.normal(0.4, 0.1, (TAILLE, TAILLE)).astype(np.float32)
+        img = np.random.normal(0.5, 0.18, (TAILLE, TAILLE)).astype(np.float32)
+        if np.random.rand() < 0.5:
+            img = ajouter_tache(img, np.random.uniform(0.05, 0.18))
         X.append(np.clip(img, 0, 1))
         y.append(0)
-    #Images malignes : bruit + tache claire à position/taille aléatoire
+    #Images malignes : fond bruité + masse de contraste plus élevé (mais variable)
     for _ in range(n_malin):
-        img = np.random.normal(0.4, 0.1, (TAILLE, TAILLE)).astype(np.float32)
-        cx, cy = np.random.randint(30, 98, size=2)
-        r = np.random.randint(8, 18)
-        yy, xx = np.ogrid[:TAILLE, :TAILLE]
-        masque = (xx - cx) ** 2 + (yy - cy) ** 2 <= r ** 2
-        img[masque] += 0.35
+        img = np.random.normal(0.5, 0.18, (TAILLE, TAILLE)).astype(np.float32)
+        img = ajouter_tache(img, np.random.uniform(0.12, 0.30))
         X.append(np.clip(img, 0, 1))
         y.append(1)
 
