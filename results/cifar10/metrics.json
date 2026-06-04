@@ -1,0 +1,26 @@
+{
+  "lineaire_gris": {
+    "acc_train": 20.86,
+    "acc_test": 18.1,
+    "err_train": 79.14,
+    "err_test": 81.9
+  },
+  "1couche_gris": {
+    "acc_train": 22.08,
+    "acc_test": 22.36,
+    "err_train": 77.92,
+    "err_test": 77.64
+  },
+  "lineaire_couleur": {
+    "acc_train": 37.23,
+    "acc_test": 33.76,
+    "err_train": 62.77,
+    "err_test": 66.24
+  },
+  "1couche_couleur": {
+    "acc_train": 32.44,
+    "acc_test": 32.22,
+    "err_train": 67.56,
+    "err_test": 67.78
+  }
+}
