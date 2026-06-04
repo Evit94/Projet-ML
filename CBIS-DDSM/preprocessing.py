@@ -86,15 +86,15 @@ def generer_donnees_synthetiques(n=1500):
     y = []
     #Images bénignes : fond bruité, parfois une masse de faible contraste
     for _ in range(n_benin):
-        img = np.random.normal(0.5, 0.18, (TAILLE, TAILLE)).astype(np.float32)
-        if np.random.rand() < 0.5:
-            img = ajouter_tache(img, np.random.uniform(0.05, 0.18))
+        img = np.random.normal(0.5, 0.10, (TAILLE, TAILLE)).astype(np.float32)
+        if np.random.rand() < 0.4:
+            img = ajouter_tache(img, np.random.uniform(0.04, 0.14))
         X.append(np.clip(img, 0, 1))
         y.append(0)
     #Images malignes : fond bruité + masse de contraste plus élevé (mais variable)
     for _ in range(n_malin):
-        img = np.random.normal(0.5, 0.18, (TAILLE, TAILLE)).astype(np.float32)
-        img = ajouter_tache(img, np.random.uniform(0.12, 0.30))
+        img = np.random.normal(0.5, 0.10, (TAILLE, TAILLE)).astype(np.float32)
+        img = ajouter_tache(img, np.random.uniform(0.14, 0.32))
         X.append(np.clip(img, 0, 1))
         y.append(1)
 
