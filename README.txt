@@ -112,10 +112,12 @@ Tous les fichiers se trouvent dans le dossier "CBIS-DDSM/".
 Classification binaire : MALIGNANT (malin) contre BENIGN et
 BENIGN_WITHOUT_CALLBACK (bénin).
 
-IMPORTANT : le dataset CBIS-DDSM complet (images DICOM) pèse plus de 150 Go et
-n'est pas inclus. Le code lit "mass_case_description_train_set.csv" et les
-images si elles sont présentes ; sinon il génère un jeu de données SYNTHETIQUE
-(clairement signalé) pour que toute la chaîne reste exécutable.
+Le CSV "mass_case_description_train_set.csv" est fourni dans le dossier CBIS-DDSM/.
+Les images DICOM (disponibles sur TCIA - The Cancer Imaging Archive) doivent être
+placées dans "CBIS-DDSM/images/" avec la structure d'origine :
+   CBIS-DDSM/images/Mass-Training_P_00001_LEFT_CC/.../000000.dcm
+   ...
+Sans les images, le code bascule automatiquement sur des données SYNTHETIQUES.
 
 - "preprocessing.py" : lecture du CSV, association image <-> label binaire,
   nettoyage des entrées invalides, redimensionnement (128x128 par défaut),
