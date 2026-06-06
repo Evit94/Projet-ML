@@ -1,10 +1,10 @@
 #PRETRAITEMENT CBIS-DDSM (mammographies)
 #Classification binaire : MALIGNANT (1) contre BENIGN / BENIGN_WITHOUT_CALLBACK (0)
 #
-#UTILISATION AVEC LES VRAIES DONNEES :
-#1. Placer le dossier contenant les images DICOM dans CBIS-DDSM/images/
-#   (les chemins dans le CSV sont du type Mass-Training_P_00001_LEFT_CC/.../000000.dcm)
-#2. Le CSV mass_case_description_train_set.csv est déjà dans CBIS-DDSM/
+#UTILISATION AVEC LES VRAIES DONNEES (version Kaggle JPEG) :
+#1. Télécharger le dataset : kaggle.com/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset
+#2. Placer le dossier "jpeg/" dans CBIS-DDSM/images/ :
+#      CBIS-DDSM/images/jpeg/Mass-Training_P_00001_LEFT_CC/.../000000.jpg
 #3. Lancer depuis la racine du projet : python CBIS-DDSM/preprocessing.py
 #
 #Si les images ne sont pas trouvées, le script bascule sur des données synthétiques.
@@ -16,7 +16,7 @@ TAILLE = 128  #redimensionnement par défaut 128x128
 
 #Chemin du CSV (relatif à la racine du projet)
 CSV_PATH = "CBIS-DDSM/mass_case_description_train_set.csv"
-#Dossier racine des images DICOM (les chemins du CSV s'y appliquent directement)
+#Dossier racine des images. Le dataset Kaggle place les JPEG dans un sous-dossier "jpeg/"
 IMG_DIR = "CBIS-DDSM/images"
 
 
@@ -27,19 +27,43 @@ def label_binaire(pathology):
     return 0
 
 
-def lire_dicom(chemin):
-    #Lecture d'un fichier DICOM et conversion en tableau numpy normalisé [0,1]
-    import pydicom
+def trouver_image(chemin_csv):
+    #Cherche l'image en essayant plusieurs formats et sous-dossiers possibles.
+    #Le dataset Kaggle (awsaf49) place les JPEG dans un sous-dossier "jpeg/"
+    #avec le même chemin que le CSV mais en .jpg au lieu de .dcm.
+    base = chemin_csv.replace("\\", "/")
+    base_sans_ext = base.rsplit(".", 1)[0]
+
+    candidats = [
+        #Version Kaggle JPEG : CBIS-DDSM/images/jpeg/Mass-Training_.../000000.jpg
+        os.path.join(IMG_DIR, "jpeg", base_sans_ext + ".jpg"),
+        #Version DICOM originale : CBIS-DDSM/images/Mass-Training_.../000000.dcm
+        os.path.join(IMG_DIR, base),
+        #Autres extensions possibles
+        os.path.join(IMG_DIR, base_sans_ext + ".png"),
+        os.path.join(IMG_DIR, base_sans_ext + ".jpeg"),
+    ]
+    for c in candidats:
+        if os.path.exists(c):
+            return c
+    return None
+
+
+def lire_image(chemin):
+    #Lecture d'une image (JPEG/PNG ou DICOM) et conversion en tableau [0,1]
     from PIL import Image
 
-    ds = pydicom.dcmread(chemin)
-    pixel = ds.pixel_array.astype(np.float32)
-    #Normalisation min-max sur l'image (mammographies: dynamique très variable)
-    pmin, pmax = pixel.min(), pixel.max()
-    if pmax > pmin:
-        pixel = (pixel - pmin) / (pmax - pmin)
-    #Redimensionnement
-    img = Image.fromarray((pixel * 255).astype(np.uint8)).convert("L")
+    if chemin.lower().endswith(".dcm"):
+        import pydicom
+        ds = pydicom.dcmread(chemin)
+        pixel = ds.pixel_array.astype(np.float32)
+        pmin, pmax = pixel.min(), pixel.max()
+        if pmax > pmin:
+            pixel = (pixel - pmin) / (pmax - pmin)
+        img = Image.fromarray((pixel * 255).astype(np.uint8)).convert("L")
+    else:
+        img = Image.open(chemin).convert("L")
+
     img = img.resize((TAILLE, TAILLE))
     return np.asarray(img, dtype=np.float32) / 255.0
 
@@ -59,24 +83,24 @@ def charger_donnees_reelles():
     ignores = 0
 
     for _, ligne in df.iterrows():
-        chemin_relatif = str(ligne[col_image]).strip()
-        chemin = os.path.join(IMG_DIR, chemin_relatif)
+        chemin_csv = str(ligne[col_image]).strip()
+        chemin = trouver_image(chemin_csv)
 
-        if not os.path.exists(chemin):
+        if chemin is None:
             ignores += 1
             continue
         try:
-            img = lire_dicom(chemin)
+            img = lire_image(chemin)
             X.append(img)
             y.append(label_binaire(ligne[col_label]))
-        except Exception as e:
+        except Exception:
             ignores += 1
             continue
 
     if len(X) == 0:
         return None, None
 
-    print(f"Images chargées : {len(X)}, entrées ignorées (chemin manquant) : {ignores}")
+    print(f"Images chargées : {len(X)}, entrées ignorées (non trouvées) : {ignores}")
     X = np.array(X).reshape(-1, 1, TAILLE, TAILLE)
     y = np.array(y, dtype=np.float32)
     return X, y
@@ -123,15 +147,18 @@ def generer_donnees_synthetiques(n=1500):
 
 
 #---------- Chargement ----------
-#On cherche d'abord les vraies images DICOM
+#On cherche d'abord les vraies images (JPEG Kaggle ou DICOM original)
 _donnees_reelles = False
-if os.path.exists(CSV_PATH) and os.path.isdir(IMG_DIR):
-    print("CSV trouvé. Chargement des images DICOM...")
-    X, y = charger_donnees_reelles()
-    if X is not None and len(X) > 0:
-        _donnees_reelles = True
-    else:
-        print("Aucune image DICOM valide trouvée.")
+if os.path.exists(CSV_PATH):
+    #On vérifie si au moins un des dossiers d'images existe
+    dossier_jpeg = os.path.join(IMG_DIR, "jpeg")
+    if os.path.isdir(IMG_DIR) or os.path.isdir(dossier_jpeg):
+        print("Images trouvées. Chargement en cours...")
+        X, y = charger_donnees_reelles()
+        if X is not None and len(X) > 0:
+            _donnees_reelles = True
+        else:
+            print("Aucune image valide trouvée dans", IMG_DIR)
 
 if not _donnees_reelles:
     X, y = generer_donnees_synthetiques()
