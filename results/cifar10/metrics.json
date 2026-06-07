@@ -1,0 +1,32 @@
+{
+  "lineaire_gris": {
+    "acc_train": 20.3,
+    "acc_test": 17.72,
+    "err_train": 79.7,
+    "err_test": 82.28
+  },
+  "1couche_gris": {
+    "acc_train": 37.63,
+    "acc_test": 34.84,
+    "err_train": 62.37,
+    "err_test": 65.16
+  },
+  "lineaire_couleur": {
+    "acc_train": 37.24,
+    "acc_test": 34.08,
+    "err_train": 62.76,
+    "err_test": 65.92
+  },
+  "1couche_couleur": {
+    "acc_train": 49.82,
+    "acc_test": 43.86,
+    "err_train": 50.18,
+    "err_test": 56.14
+  },
+  "CNN": {
+    "acc_train": 66.53,
+    "acc_test": 48.62,
+    "err_train": 33.47,
+    "err_test": 51.38
+  }
+}

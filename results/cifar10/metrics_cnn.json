@@ -1,0 +1,6 @@
+{
+  "acc_train": 66.53,
+  "acc_test": 48.62,
+  "err_train": 33.47,
+  "err_test": 51.38
+}

@@ -1,5 +1,8 @@
 .venv/
 venv/
-.vscode/
 __pycache__/
 *.pyc
+*.pth
+*.npy
+CBIS-DDSM/archive
+results/cbis_ddsm/
