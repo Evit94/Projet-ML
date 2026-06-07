@@ -116,6 +116,15 @@ On utilise la version JPEG de CBIS-DDSM, placée dans "CBIS-DDSM/archive/"
 (CSV de description + dicom_info.csv + images JPEG). 2857 vues (mammographies
 complètes) issues de 1460 patients sont chargées.
 
+IMPORTANT - TELECHARGEMENT DU DATASET :
+Les images ne sont PAS incluses dans le dépôt (trop volumineuses). Pour que le
+code fonctionne, il faut télécharger le dataset CBIS-DDSM (version JPEG) ici :
+  https://www.kaggle.com/datasets/awsaf49/cbis-ddsm-breast-cancer-image-dataset
+
+Puis placer le contenu dans "CBIS-DDSM/archive/" en respectant cette structure :
+  CBIS-DDSM/archive/csv/    (dicom_info.csv, mass_*_set.csv, calc_*_set.csv, ...)
+  CBIS-DDSM/archive/jpeg/   (dossiers d'images .jpg)
+
 - "preprocessing.py" : lecture des CSV (mass + calc), association image <-> label
   binaire via dicom_info.csv, nettoyage des entrées invalides, redimensionnement
   (128x128 par défaut), normalisation. IMPORTANT : on respecte le SPLIT OFFICIEL
