@@ -33,7 +33,7 @@ les tendances restent représentatives.
 | 1 couche (gris) | 37.6% | 34.8% |
 | Linéaire (couleur) | 37.2% | 34.1% |
 | 1 couche (couleur) | 49.8% | 43.9% |
-| **CNN (couleur)** | **66.5%** | **48.6%** |
+| **CNN (couleur)** | **61.8%** | **46.0%** |
 
 Graphiques (`results/cifar10/`) :
 - `model_comparison.png` — comparaison des 5 modèles (train vs test)
@@ -52,7 +52,7 @@ performances (couleur : 34.1% → 43.9%). Le modèle linéaire ne peut tracer qu
 frontières linéaires dans l'espace des pixels, insuffisant pour des objets aussi
 variables.
 
-**MLP vs CNN.** Le CNN obtient la meilleure accuracy test (48.6%). Surtout, il
+**MLP vs CNN.** Le CNN obtient la meilleure accuracy test (46.0%). Surtout, il
 exploite la **structure spatiale** de l'image (convolutions, invariance par
 translation) là où le MLP traite chaque pixel indépendamment après mise à plat. Le
 CNN est donc bien plus adapté aux images.
@@ -75,12 +75,16 @@ l'architecture aux données.
 ## Overfitting
 
 Le surapprentissage est très visible sur le CNN : sur ses courbes (`loss_curve.png`,
-`accuracy_curve.png`), l'accuracy train continue de monter (jusqu'à ~74% à l'epoch 15)
-alors que l'accuracy test stagne autour de 48% à partir de l'epoch ~11. L'**early
+`accuracy_curve.png`), l'accuracy train continue de monter (jusqu'à ~70% à l'epoch 14)
+alors que l'accuracy de **validation** plafonne autour de 45-46% dès l'epoch ~9. L'**early
 stopping** sert précisément à éviter de continuer à entraîner dans cette zone : on
-conserve le modèle au meilleur score de validation. L'écart train/test (~66% vs 49%
-sur les métriques sauvegardées) confirme l'overfitting, attendu sans régularisation
-ni augmentation de données.
+conserve le modèle au meilleur score de validation (epoch 11), puis on évalue le test
+**une seule fois**. L'écart train/test final (~62% vs 46%) confirme l'overfitting,
+attendu sans régularisation ni augmentation de données.
+
+> Note méthodologique : l'early stopping et le choix du meilleur modèle se font sur un
+> set de **validation** découpé depuis le train, jamais sur le test. Le test n'est
+> utilisé qu'à la toute fin, pour une estimation non biaisée de la performance.
 
 ## Difficulté de CIFAR-10 par rapport à MNIST
 

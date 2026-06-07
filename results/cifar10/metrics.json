@@ -24,9 +24,9 @@
     "err_test": 56.14
   },
   "CNN": {
-    "acc_train": 66.53,
-    "acc_test": 48.62,
-    "err_train": 33.47,
-    "err_test": 51.38
+    "acc_train": 61.79,
+    "acc_test": 46.02,
+    "err_train": 38.21,
+    "err_test": 53.98
   }
 }

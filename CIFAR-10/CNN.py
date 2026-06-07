@@ -13,18 +13,24 @@ from preprocessing import X_train, X_test, Y_train, Y_test
 # Conversion numpy → tenseurs PyTorch
 # CIFAR attend (N, C, H, W) donc on reshape (50000, 3, 32, 32)
 # Sur CPU l'entraînement complet est très long, on prend donc un sous-ensemble
-N_TRAIN = 15000
-N_TEST = 5000
-X_train_t = torch.tensor(X_train[:N_TRAIN].reshape(-1, 3, 32, 32), dtype=torch.float32)
-X_test_t  = torch.tensor(X_test[:N_TEST].reshape(-1, 3, 32, 32), dtype=torch.float32)
-Y_train_t = torch.tensor(np.argmax(Y_train[:N_TRAIN], axis=1), dtype=torch.long)
-Y_test_t  = torch.tensor(np.argmax(Y_test[:N_TEST], axis=1), dtype=torch.long)
+N_TRAIN = 15000   # taille du sous-ensemble d'apprentissage (train + validation)
+N_VAL   = 3000    # validation découpée DEPUIS le train (pas depuis le test)
+N_TEST  = 5000
+
+X_full = torch.tensor(X_train[:N_TRAIN].reshape(-1, 3, 32, 32), dtype=torch.float32)
+Y_full = torch.tensor(np.argmax(Y_train[:N_TRAIN], axis=1), dtype=torch.long)
+
+# Split train / validation. Le TEST n'est utilisé qu'une seule fois, à la fin,
+# pour ne pas biaiser l'early stopping ni le choix du meilleur modèle.
+X_train_t, Y_train_t = X_full[:N_TRAIN - N_VAL], Y_full[:N_TRAIN - N_VAL]
+X_val_t,   Y_val_t   = X_full[N_TRAIN - N_VAL:], Y_full[N_TRAIN - N_VAL:]
+X_test_t = torch.tensor(X_test[:N_TEST].reshape(-1, 3, 32, 32), dtype=torch.float32)
+Y_test_t = torch.tensor(np.argmax(Y_test[:N_TEST], axis=1), dtype=torch.long)
 
 # DataLoader
-train_dataset = TensorDataset(X_train_t, Y_train_t)
-test_dataset  = TensorDataset(X_test_t, Y_test_t)
-train_loader  = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader   = DataLoader(test_dataset, batch_size=64)
+train_loader = DataLoader(TensorDataset(X_train_t, Y_train_t), batch_size=64, shuffle=True)
+val_loader   = DataLoader(TensorDataset(X_val_t, Y_val_t), batch_size=64)
+test_loader  = DataLoader(TensorDataset(X_test_t, Y_test_t), batch_size=64)
 
 # Architecture CNN
 class CNN(nn.Module):
@@ -70,10 +76,11 @@ def accuracy(loader):
     return (correct / total) * 100
 
 # Entraînement avec early stopping + sauvegarde du meilleur modèle
+# L'early stopping et le choix du meilleur modèle se font sur la VALIDATION.
 def train(epochs=15, patience=3):
     loss_history = []
     acc_train_history = []
-    acc_test_history = []
+    acc_val_history = []
     best_acc = 0
     epochs_sans_amelioration = 0
 
@@ -89,15 +96,15 @@ def train(epochs=15, patience=3):
 
         loss_moy = total_loss / len(train_loader)
         acc_tr = accuracy(train_loader)
-        acc_te = accuracy(test_loader)
+        acc_vl = accuracy(val_loader)
         loss_history.append(loss_moy)
         acc_train_history.append(acc_tr)
-        acc_test_history.append(acc_te)
-        print(f"Epoch {epoch+1}, loss = {loss_moy:.4f}, acc train = {acc_tr:.2f}%, acc test = {acc_te:.2f}%")
+        acc_val_history.append(acc_vl)
+        print(f"Epoch {epoch+1}, loss = {loss_moy:.4f}, acc train = {acc_tr:.2f}%, acc val = {acc_vl:.2f}%")
 
-        # Sauvegarde du meilleur modèle (selon l'accuracy test)
-        if acc_te > best_acc:
-            best_acc = acc_te
+        # Sauvegarde du meilleur modèle (selon l'accuracy de validation)
+        if acc_vl > best_acc:
+            best_acc = acc_vl
             torch.save(model.state_dict(), "CIFAR-10/params/cnn_best.pth")
             epochs_sans_amelioration = 0
         else:
@@ -107,7 +114,7 @@ def train(epochs=15, patience=3):
                 print(f"Early stopping à l'epoch {epoch+1}")
                 break
 
-    return loss_history, acc_train_history, acc_test_history
+    return loss_history, acc_train_history, acc_val_history
 
 # Évaluation (taux d'erreur)
 def evaluate(loader):
@@ -137,9 +144,10 @@ def matrice_confusion(loader):
     return matrice
 
 
-loss_history, acc_train_history, acc_test_history = train(epochs=15, patience=3)
+loss_history, acc_train_history, acc_val_history = train(epochs=15, patience=3)
 
-# On recharge le meilleur modèle pour l'évaluation finale
+# On recharge le meilleur modèle (sélectionné sur la validation) pour
+# l'évaluation finale sur le TEST, qui n'a servi à rien jusqu'ici.
 model.load_state_dict(torch.load("CIFAR-10/params/cnn_best.pth"))
 
 err_train = evaluate(train_loader)
@@ -171,7 +179,7 @@ plt.close()
 # Courbe d'accuracy (train et test)
 plt.figure(figsize=(8, 5))
 plt.plot(range(1, len(acc_train_history) + 1), acc_train_history, "o-", label="train")
-plt.plot(range(1, len(acc_test_history) + 1), acc_test_history, "o-", label="test")
+plt.plot(range(1, len(acc_val_history) + 1), acc_val_history, "o-", label="validation")
 plt.xlabel("Epoch")
 plt.ylabel("Accuracy (%)")
 plt.title("CNN CIFAR-10 - Courbe d'accuracy")

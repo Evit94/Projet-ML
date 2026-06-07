@@ -101,7 +101,7 @@ Tous les fichiers se trouvent dans le dossier "CIFAR-10/".
     Modèle linéaire (couleur) : 34.1%
     1 couche cachée (gris)    : 34.8%
     1 couche cachée (couleur) : 43.9%
-    CNN (PyTorch, couleur)    : 48.6%
+    CNN (PyTorch, couleur)    : 46.0%
 
 
 ============================================================
@@ -112,15 +112,19 @@ Tous les fichiers se trouvent dans le dossier "CBIS-DDSM/".
 Classification binaire : MALIGNANT (malin) contre BENIGN et
 BENIGN_WITHOUT_CALLBACK (bénin).
 
-IMPORTANT : le dataset CBIS-DDSM complet (images DICOM) pèse plus de 150 Go et
-n'est pas inclus. Le code lit "mass_case_description_train_set.csv" et les
-images si elles sont présentes ; sinon il génère un jeu de données SYNTHETIQUE
-(clairement signalé) pour que toute la chaîne reste exécutable.
+On utilise la version JPEG de CBIS-DDSM, placée dans "CBIS-DDSM/archive/"
+(CSV de description + dicom_info.csv + images JPEG). 2857 vues (mammographies
+complètes) issues de 1460 patients sont chargées.
 
-- "preprocessing.py" : lecture du CSV, association image <-> label binaire,
-  nettoyage des entrées invalides, redimensionnement (128x128 par défaut),
-  normalisation, découpage train/validation/test (70/15/15), affichage de la
-  répartition des classes et calcul du pos_weight (déséquilibre).
+- "preprocessing.py" : lecture des CSV (mass + calc), association image <-> label
+  binaire via dicom_info.csv, nettoyage des entrées invalides, redimensionnement
+  (128x128 par défaut), normalisation. IMPORTANT : on respecte le SPLIT OFFICIEL
+  CBIS-DDSM (CSV *_train_set -> entraînement, CSV *_test_set -> test) et la
+  validation est découpée PAR PATIENT depuis le train. Ce découpage par patient
+  évite la fuite de données (un même patient a plusieurs vues quasi identiques et
+  ne doit jamais être à la fois en train et en test). Affiche la répartition des
+  classes et calcule le pos_weight (déséquilibre). Un cache .npy est créé au
+  premier lancement pour accélérer les suivants.
 
 - "CNN_cbis.py" : CNN simple (3 blocs Conv+ReLU+MaxPool puis 2 couches denses).
   Adam, BCEWithLogitsLoss avec pos_weight (gestion du déséquilibre), early
@@ -132,8 +136,10 @@ images si elles sont présentes ; sinon il génère un jeu de données SYNTHETIQ
   courbes d'entraînement dans "results/cbis_ddsm/", et affiche une analyse
   médicale (faux positifs / faux négatifs). Voir rapports/RAPPORT_CBIS_DDSM.md.
 
-  Résultats (test, données synthétiques) :
-    Accuracy 0.956 | Precision 0.923 | Recall 0.923 | F1 0.923 | ROC-AUC 0.995
+  Résultats (test, données réelles, split officiel par patient) :
+    Accuracy 0.602 | Precision 0.512 | Recall 0.634 | F1 0.567 | ROC-AUC 0.658
+  (NB : une version antérieure avec split aléatoire par image donnait AUC 0.995,
+   mais c'était une FUITE DE DONNEES — voir rapports/RAPPORT_CBIS_DDSM.md.)
 
 
 ============================================================
